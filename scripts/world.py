@@ -44,12 +44,16 @@ class World:
         with open (path + '/model.sdf', 'r') as xml_file:
             model_xml = xml_file.read().replace('\n', '')
         spawn_pose = Pose()
-        x,y = random.uniform(self._x,self._x + self._w),random.uniform(self._y,self._y + self._h)
-        self._target_pos = (x,y)
-        spawn_pose.position.x = x
-        spawn_pose.position.y = y
+        while True:
+            x,y = random.uniform(self._x,self._x + self._w),random.uniform(self._y,self._y + self._h)
+            self._target_pos = (x,y)
+            spawn_pose.position.x = x
+            spawn_pose.position.y = y
+            if math.dist((4,4),(x,y) ) >= 0.7 and math.dist((4,2),(x,y) ) >= 0.7 and math.dist((2,4),(x,y) ) >= 0.7 and math.dist((2,2),(x,y) ) >= 0.7:
+                break
+        print(f'Goal coords X:{x} Y:{y}')
         spawn('target', model_xml, '', spawn_pose, 'world')
-        
+        spawn('target', model_xml, '', spawn_pose, 'world')
 
     def delete_model(self,model_name):
         try:
@@ -76,8 +80,8 @@ class World:
         service = rospy.ServiceProxy('gazebo/set_model_state', SetModelState)
         smsReq = SetModelStateRequest()
         smsReq.model_state.model_name = name
-        smsReq.model_state.pose.position.x = x
-        smsReq.model_state.pose.position.y = y
+        smsReq.model_state.pose.position.x = 1
+        smsReq.model_state.pose.position.y = 1
         service(smsReq)
 
     
@@ -137,13 +141,15 @@ class World:
 
 
     def calc_reward(self,state): # crash
-        if min(state[1:len(state) - 3] ) < 0.12 or state[0] < 0.2:
+        if min(state[1:len(state) - 3] ) < 0.15 or state[0] < 0.25:
+            print('Wall hit')
             return torch.tensor([-2000],dtype=torch.float32,device='cuda'), True  
 
         if state[len(state) - 2] < 0.22: # goal
-            return torch.tensor([200],dtype=torch.float32,device='cuda'), True
+            print('Goal reached')
+            return torch.tensor([300],dtype=torch.float32,device='cuda'), True
         
-        return torch.tensor([math.cos(state[len(state) - 1] )],dtype=torch.float32,device='cuda'),False
+        return torch.tensor([1.5 * math.cos(state[len(state) - 1] )],dtype=torch.float32,device='cuda'),False
         
 
     def step(self,action):

@@ -12,7 +12,8 @@ EPS_DECAY = 1000
 TAU = 0.005
 LR = 1e-4
 NUM_EPISODES = 600
-BATCH_SIZE = 32
+BATCH_SIZE = 128
+
 
 rospy.init_node('train')
 action_space = [2.5,1.25,0,-1.25,-2.5]
@@ -24,7 +25,8 @@ target_net = DQN(N_FEATURES,N_ACTIONS).to(device)
 target_net.load_state_dict(policy_net.state_dict())
 optimizer = optim.AdamW(policy_net.parameters(), lr=LR, amsgrad=True)
 memory = ReplayMemory(10000)
-world = World(0,0,1.5,1.5) # torepair
+world = World(0.4,0.4,5,5) # torepair
+
 
 def select_action(state):
     global steps_done
@@ -67,7 +69,9 @@ def optimize_model():
     torch.nn.utils.clip_grad_value_(policy_net.parameters(), 100)
     optimizer.step()
 
+
 for i_episode in range(NUM_EPISODES):
+    print(f'EPOCH {i_episode + 1}/{NUM_EPISODES}')
     # Initialize the environment and get it's state
     state = world.reset()
     state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
@@ -88,3 +92,5 @@ for i_episode in range(NUM_EPISODES):
             episode_durations.append(t + 1)
             break
 
+
+torch.save(target_net.state_dict(),'/home/adam/catkin_ws/src/project/weights/thirdmodel.pth')
