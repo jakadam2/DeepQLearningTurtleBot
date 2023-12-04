@@ -11,7 +11,7 @@ import torch
 
 class World:
     action_space = [2.5,1.25,0,-1.25,-2.5]
-    def __init__(self,x,y,w,h,initx = 0,inity = 0,vel = 0.15) -> None:
+    def __init__(self,x,y,w,h,initx = 0,inity = 0,vel = 0.30) -> None:
         # here will be parameters of the world
         self._x = x
         self._y = y
@@ -122,7 +122,7 @@ class World:
         posx,posy,orient,twist= self.robot_position()
         tarx,tary = self.target_position()
         dist = math.hypot(tarx - posx, tary - posy)
-        angle = math.atan2(tary - posy, tarx - tary)
+        angle = math.atan2(tary - posy, tarx - posx)
         yaw = math.atan2(+2.0 * (orient.w * orient.z + orient.x * orient.y), 1.0 - 2.0 * (orient.y * orient.y + orient.z * orient.z))
         heading = angle - yaw
         if heading > math.pi:
@@ -138,10 +138,10 @@ class World:
 
     def calc_reward(self,state): # crash
         if min(state[1:len(state) - 3] ) < 0.12 or state[0] < 0.2:
-            return -2000, True  
+            return torch.tensor([-2000],dtype=torch.float32,device='cuda'), True  
 
-        if state[len(state) - 2] < 0.1: # goal
-            return 200, True
+        if state[len(state) - 2] < 0.22: # goal
+            return torch.tensor([200],dtype=torch.float32,device='cuda'), True
         
         return torch.tensor([math.cos(state[len(state) - 1] )],dtype=torch.float32,device='cuda'),False
         

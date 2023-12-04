@@ -24,7 +24,7 @@ target_net = DQN(N_FEATURES,N_ACTIONS).to(device)
 target_net.load_state_dict(policy_net.state_dict())
 optimizer = optim.AdamW(policy_net.parameters(), lr=LR, amsgrad=True)
 memory = ReplayMemory(10000)
-world = World(0,0,4,4) # torepair
+world = World(0,0,1.5,1.5) # torepair
 
 def select_action(state):
     global steps_done
@@ -73,7 +73,6 @@ for i_episode in range(NUM_EPISODES):
     state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
     for t in count():
         action = select_action(state)
-        print(action_space[action])
         next_state,reward,done = world.step(action_space[action])
         next_state = torch.tensor(next_state, dtype=torch.float32, device=device).unsqueeze(0)        
         memory.push(state, action, next_state, reward)
