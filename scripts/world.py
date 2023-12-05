@@ -8,9 +8,11 @@ import os
 import random
 import math
 import torch
+from pathlib import Path
+
 
 class World:
-    action_space = [2.5,1.25,0,-1.25,-2.5]
+
     def __init__(self,x,y,w,h,initx = 0,inity = 0,vel = 0.30) -> None:
         # here will be parameters of the world
         self._x = x
@@ -28,7 +30,7 @@ class World:
     def spawn_robot(self,x,y):
         rospy.wait_for_service('gazebo/spawn_sdf_model')
         spawn = rospy.ServiceProxy('gazebo/spawn_sdf_model', SpawnModel)
-        path = '/home/adam/catkin_ws/src/turtlebot3_simulations/turtlebot3_gazebo/models/turtlebot3_burger'
+        path = os.path.join(Path(__file__).parent.parent,'models','turtlebot3_burger')
         with open (path + '/model.sdf', 'r') as xml_file:
             model_xml = xml_file.read().replace('\n', '')
         spawn_pose = Pose()
@@ -40,7 +42,7 @@ class World:
     def spawn_target(self):
         rospy.wait_for_service('gazebo/spawn_sdf_model')
         spawn = rospy.ServiceProxy('gazebo/spawn_sdf_model', SpawnModel)
-        path = '/home/adam/catkin_ws/src/turtlebot3_simulations/turtlebot3_gazebo/models/turtlebot3_square/goal_box'
+        path = os.path.join(Path(__file__).parent.parent,'models','goal_box')
         with open (path + '/model.sdf', 'r') as xml_file:
             model_xml = xml_file.read().replace('\n', '')
         spawn_pose = Pose()
@@ -86,7 +88,7 @@ class World:
 
     
     def reset_world(self,delete_target = True):
-        self._vel_publisher.publish(Twist())
+        self.stop_robot()
         self.teleport_robot('turtlebot3_burger',self._initx,self._inity)
         if delete_target:
             self.delete_model('target')
@@ -146,7 +148,7 @@ class World:
             print('Wall hit')
             return torch.tensor([-2000],dtype=torch.float32,device='cuda'), True  
 
-        if state[len(state) - 2] < 0.22: # goal
+        if state[len(state) - 2] < 0.25: # goal
             print('Goal reached')
             return torch.tensor([300],dtype=torch.float32,device='cuda'), True
         
@@ -169,7 +171,7 @@ class World:
     def set_target(self,x,y):
         rospy.wait_for_service('gazebo/spawn_sdf_model')
         spawn = rospy.ServiceProxy('gazebo/spawn_sdf_model', SpawnModel)
-        path = '/home/adam/catkin_ws/src/turtlebot3_simulations/turtlebot3_gazebo/models/turtlebot3_square/goal_box'
+        path = os.path.join(Path(__file__).parent.parent,'models','goal_box')
         with open (path + '/model.sdf', 'r') as xml_file:
             model_xml = xml_file.read().replace('\n', '')
         spawn_pose = Pose()

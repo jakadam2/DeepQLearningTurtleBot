@@ -4,6 +4,8 @@ from model import DQN
 import torch
 import rospy
 import sys
+import os
+from pathlib import Path
 
 N_FEATURES = 39
 N_ACTIONS = 5
@@ -12,11 +14,12 @@ class TargetAchiever:
 
     action_space = [2.5,1.25,0,-1.25,-2.5]
 
-    def __init__(self) -> None:
+    def __init__(self,model_name) -> None:
         self.device = 'cuda'
         rospy.init_node('target_achiever')
         self.model = DQN(N_FEATURES,N_ACTIONS).to(self.device)
-        self.model.load_state_dict(torch.load('/home/adam/catkin_ws/src/project/weights/thirdmodel.pth'))
+        model_path = os.path.join(Path(__file__).parent.parent,'weights',model_name + '.pth')
+        self.model.load_state_dict(torch.load(model_path))
         self.model.eval()
         self.world = World(0.4,0.4,5,5)
         print('Model loaded')
@@ -33,8 +36,8 @@ class TargetAchiever:
         print('Target reached')
 
 if __name__ == '__main__':
-    
-    a = TargetAchiever()
+    model_name = sys.argv[1]
+    a = TargetAchiever(model_name)
     while not rospy.is_shutdown():
         x,y = input('Give coords to achieve: ').split(' ')
         x,y = float(x),float(y)

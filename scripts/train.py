@@ -2,6 +2,9 @@
 from world import World
 from model import *
 import rospy
+import os
+from pathlib import Path
+import sys
 
 N_FEATURES = 39
 N_ACTIONS = 5
@@ -12,7 +15,7 @@ EPS_DECAY = 1000
 TAU = 0.005
 LR = 1e-4
 NUM_EPISODES = 600
-BATCH_SIZE = 128
+BATCH_SIZE = 96
 
 
 rospy.init_node('train')
@@ -26,7 +29,11 @@ target_net.load_state_dict(policy_net.state_dict())
 optimizer = optim.AdamW(policy_net.parameters(), lr=LR, amsgrad=True)
 memory = ReplayMemory(10000)
 world = World(0.4,0.4,5,5)
-
+model_name = sys.argv[1]
+if len(sys.argv) > 2:
+    NUM_EPISODES = int(sys.argv[2])
+if model_name is None:
+    raise ValueError()
 
 def select_action(state):
     global steps_done
@@ -93,4 +100,4 @@ for i_episode in range(NUM_EPISODES):
             break
 
 
-torch.save(target_net.state_dict(),'/home/adam/catkin_ws/src/project/weights/thirdmodel.pth')
+torch.save(target_net.state_dict(),os.path.join(Path(__file__).parent.parent,'weights',model_name + '.pth'))
