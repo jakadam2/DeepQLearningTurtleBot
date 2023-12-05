@@ -85,10 +85,11 @@ class World:
         service(smsReq)
 
     
-    def reset_world(self):
+    def reset_world(self,delete_target = True):
         self._vel_publisher.publish(Twist())
         self.teleport_robot('turtlebot3_burger',self._initx,self._inity)
-        self.delete_model('target')
+        if delete_target:
+            self.delete_model('target')
 
 
     def start_robot(self):
@@ -159,9 +160,40 @@ class World:
         return state,reward,done
     
 
-    def reset(self):
-        self.reset_world()
+    def reset(self,delete_target = True):
+        self.reset_world(delete_target)
         self.spawn_target()
         return self.make_state()
 
 
+    def set_target(self,x,y):
+        rospy.wait_for_service('gazebo/spawn_sdf_model')
+        spawn = rospy.ServiceProxy('gazebo/spawn_sdf_model', SpawnModel)
+        path = '/home/adam/catkin_ws/src/turtlebot3_simulations/turtlebot3_gazebo/models/turtlebot3_square/goal_box'
+        with open (path + '/model.sdf', 'r') as xml_file:
+            model_xml = xml_file.read().replace('\n', '')
+        spawn_pose = Pose()
+        self._target_pos = (x,y)
+        spawn_pose.position.x = x
+        spawn_pose.position.y = y
+        if not (math.dist((4,4),(x,y) ) >= 0.7 and math.dist((4,2),(x,y) ) >= 0.7 and math.dist((2,4),(x,y) ) >= 0.7 and math.dist((2,2),(x,y) ) >= 0.7):
+            raise TypeError('Is inposibble to put a target in occupied place')
+        print(f'Target coords X:{x} Y:{y}')
+        spawn('target', model_xml, '', spawn_pose, 'world')
+
+
+    def reset_and_spawn(self,x,y,delete_target = True):
+        self.reset_world(delete_target)
+        self.set_target(x,y)
+        return self.make_state()
+    
+
+    def check_target(self,state):
+        return state[len(state) - 2] < 0.22
+
+
+    def eval_step(self,action):
+        self.turn_robot(action)
+        state = self.make_state()
+        done = self.check_target(state)
+        return state,done

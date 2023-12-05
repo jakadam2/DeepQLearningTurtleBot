@@ -25,7 +25,7 @@ target_net = DQN(N_FEATURES,N_ACTIONS).to(device)
 target_net.load_state_dict(policy_net.state_dict())
 optimizer = optim.AdamW(policy_net.parameters(), lr=LR, amsgrad=True)
 memory = ReplayMemory(10000)
-world = World(0.4,0.4,5,5) # torepair
+world = World(0.4,0.4,5,5)
 
 
 def select_action(state):
