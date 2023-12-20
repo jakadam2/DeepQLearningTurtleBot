@@ -52,13 +52,14 @@ find_package(catkin REQUIRED COMPONENTS
   Action.msg
   State.msg 
  )
-  generate_messages()
+  
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+ add_service_files(
+  FILES
+  Controller.srv
+
+ )
+ generate_messages()
 
 ## Generate actions in the 'action' folder
 # add_action_files(
