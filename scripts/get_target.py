@@ -6,6 +6,9 @@ import rospy
 import sys
 import os
 from pathlib import Path
+from model_server import ModelServer
+from project.srv import Controller,ControllerRequest
+from project.msg import State
 
 N_FEATURES = 39
 N_ACTIONS = 5
@@ -22,16 +25,25 @@ class TargetAchiever:
         self.model.load_state_dict(torch.load(model_path))
         self.model.eval()
         self.world = World(0.4,0.4,5,5)
+        rospy.wait_for_service('/Controller')
+        self.model_server = rospy.ServiceProxy('/Controller',Controller)
         print('Model loaded')
 
     def achieve_target(self,x,y):
-        current_state = self.world.reset_and_spawn(x,y,delete_target= False)
+        
+        server_state = State()
+        server_req = ControllerRequest()
+        current_state = self.world.reset_and_spawn(x,y,delete_target= False)     
         current_state = torch.tensor(current_state, dtype=torch.float32, device=self.device).unsqueeze(0)
         done = False
         while not done:
             action = self.model(current_state)
             current_state,done = self.world.eval_step(TargetAchiever.action_space[action.max(1).indices.view(1, 1)])
             current_state = torch.tensor(current_state, dtype=torch.float32, device=self.device).unsqueeze(0)
+            print(current_state)
+            server_state.state_array = current_state.squeeze(0).tolist()
+            server_req.state = server_state
+            self.model_server(server_req)
         self.world.reset_world()
         print('Target reached')
 

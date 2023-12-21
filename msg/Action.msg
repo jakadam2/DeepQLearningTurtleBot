@@ -1,1 +1,1 @@
-uint16 action_nr
+float32 action_nr
