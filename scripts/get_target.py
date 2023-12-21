@@ -1,12 +1,6 @@
 #! /usr/bin/env python
 from world import World
-from model import DQN
-import torch
 import rospy
-import sys
-import os
-from pathlib import Path
-from model_server import ModelServer
 from project.srv import Controller,ControllerRequest
 from project.msg import State
 
@@ -17,39 +11,24 @@ class TargetAchiever:
 
     action_space = [2.5,1.25,0,-1.25,-2.5]
 
-    def __init__(self,model_name) -> None:
-        self.device = 'cuda'
+    def __init__(self) -> None:
         rospy.init_node('target_achiever')
-        self.model = DQN(N_FEATURES,N_ACTIONS).to(self.device)
-        model_path = os.path.join(Path(__file__).parent.parent,'weights',model_name + '.pth')
-        self.model.load_state_dict(torch.load(model_path))
-        self.model.eval()
         self.world = World(0.4,0.4,5,5)
         rospy.wait_for_service('/Controller')
         self.model_server = rospy.ServiceProxy('/Controller',Controller)
-        print('Model loaded')
 
     def achieve_target(self,x,y):
-        
-        server_state = State()
-        server_req = ControllerRequest()
         current_state = self.world.reset_and_spawn(x,y,delete_target= False)     
-        current_state = torch.tensor(current_state, dtype=torch.float32, device=self.device).unsqueeze(0)
         done = False
         while not done:
-            action = self.model(current_state)
-            current_state,done = self.world.eval_step(TargetAchiever.action_space[action.max(1).indices.view(1, 1)])
-            current_state = torch.tensor(current_state, dtype=torch.float32, device=self.device).unsqueeze(0)
-            print(current_state)
-            server_state.state_array = current_state.squeeze(0).tolist()
-            server_req.state = server_state
-            self.model_server(server_req)
+            alter_action = self.model_server(ControllerRequest(State(current_state.tolist())))
+            current_state,done = self.world.eval_step(alter_action.action.action_nr)     
         self.world.reset_world()
         print('Target reached')
 
+
 if __name__ == '__main__':
-    model_name = sys.argv[1]
-    a = TargetAchiever(model_name)
+    a = TargetAchiever()
     while not rospy.is_shutdown():
         x,y = input('Give coords to achieve: ').split(' ')
         x,y = float(x),float(y)
