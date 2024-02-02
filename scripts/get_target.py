@@ -24,7 +24,7 @@ class TargetAchiever:
             alter_action = self.model_server(ControllerRequest(State(current_state.tolist())))
             current_state,done = self.world.eval_step(alter_action.action.action_nr)     
         self.world.reset_world()
-        print('Target reached')
+        rospy.loginfo(f'Target: {x},{y} achieved')
 
 
 if __name__ == '__main__':

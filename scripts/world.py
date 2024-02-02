@@ -180,7 +180,7 @@ class World:
         spawn_pose.position.y = y
         if not (math.dist((4,4),(x,y) ) >= 0.7 and math.dist((4,2),(x,y) ) >= 0.7 and math.dist((2,4),(x,y) ) >= 0.7 and math.dist((2,2),(x,y) ) >= 0.7):
             raise TypeError('Is inposibble to put a target in occupied place')
-        print(f'Target coords X:{x} Y:{y}')
+        rospy.loginfo(f'Target coords X:{x} Y:{y}')
         spawn('target', model_xml, '', spawn_pose, 'world')
 
 

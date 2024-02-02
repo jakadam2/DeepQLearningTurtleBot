@@ -1,0 +1,4 @@
+rospy==1.16.0
+rospy==1.15.15
+sensor_msgs==1.13.1
+torch==2.1.1

@@ -5,7 +5,6 @@ from project.srv import Controller,ControllerResponse
 from project.msg import Action
 from model import DQN
 import torch
-import sys
 import os
 from pathlib import Path
 
@@ -38,5 +37,5 @@ class ModelServer:
 
 
 if __name__ == '__main__':
-    server = ModelServer('thirdmodel',N_FEATURES,N_ACTIONS)
+    server = ModelServer('model',N_FEATURES,N_ACTIONS)
     server.start()
